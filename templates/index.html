@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .search-box {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0px 2px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border 0.3s;
+        }
+        
+        button {
+            padding: 15px 40px;
+            background-color: #838ce5;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            background-color: #676fb4;
+        }
+        
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0px 2px rgba(0,0,0,0.2);
+        }
+        
+        .stats h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .doc-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .doc-tag {
+            background: #f0f0f0;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        
+        .results {
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 0px 2px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .rank {
+            background-color: #838ce5;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .doc-name {
+            flex: 1;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: black;
+            text-decoration: none;
+        }
+
+        .doc-name:hover {
+            text-decoration: underline;
+        }
+        
+        .score {
+            font-size: 1.1em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            background: #f0f0f0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #838ce5;
+            transition: width 0.5s;
+        }
+        
+        .preview {
+            color: #333;
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        
+        .no-results {
+            text-align: center;
+            background: white;
+            box-shadow: 0 0px 2px rgba(0,0,0,0.2);
+            padding: 40px;
+            border-radius: 10px;
+            color: #333;
+        }
+
+        @media screen and (max-width: 360px) {
+            .search-form {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .search-form button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Search Engine</h1>
+            <p class="subtitle">Information Retrieval dengan TF-IDF & Cosine Similarity</p>
+        </header>
+        
+        <div class="search-box">
+            <form method="POST" action="/search" class="search-form">
+                <input type="text" name="query" placeholder="Masukkan kata kunci pencarian..." 
+                    value="{{ query or '' }}" required>
+                <button type="submit">Cari</button>
+            </form>
+        </div>
+        
+        <div class="stats">
+            <h3>Statistik Dokumen</h3>
+            <p><strong>Total Dokumen:</strong> {{ total_docs }}</p>
+            
+            {% if doc_names %}
+            <div class="doc-list">
+                {% for doc in doc_names %}
+                <span class="doc-tag">📄 {{ doc }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if results is defined %}
+        <div class="results">
+            <h2 style="margin-bottom: 20px;">
+                Hasil untuk: "{{ query }}"
+            </h2>
+            
+            {% if results %}
+                {% for result in results %}
+                <div class="result-item">
+                    <div class="result-header">
+                        <div class="rank">{{ loop.index }}</div>
+                        <a href="{{ url_for('download_file', filename=result.name) }}" target="_blank" class="doc-name">{{ result.name }}</a>
+                        <div class="score">{{ "%.2f"|format(result.score_percent) }}%</div>
+                    </div>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ result.score_percent }}%"></div>
+                    </div>
+                    
+                    <div class="preview">
+                        <strong>Preview:</strong><br>
+                        {{ result.content }}...
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <h2>Tidak ada hasil ditemukan</h2>
+                    <p>Coba gunakan kata kunci yang berbeda</p>
+                </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
