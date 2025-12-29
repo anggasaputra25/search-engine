@@ -112,10 +112,13 @@ def index():
     docs, doc_names = load_documents()
     return render_template('index.html', total_docs=len(docs), doc_names=doc_names)
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['GET' ,'POST'])
 def search():
     """Endpoint pencarian"""
-    query = request.form.get('query', '')
+    if request.method == 'POST':
+        query = request.form.get('query', '')
+    else:
+        query = request.args.get('query', '')
     
     docs, doc_names = load_documents()
     results = search_documents(query, docs, doc_names)
